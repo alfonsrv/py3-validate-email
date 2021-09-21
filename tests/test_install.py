@@ -1,5 +1,6 @@
 from pathlib import Path
-from subprocess import check_output
+from shutil import rmtree
+from subprocess import STDOUT, check_output
 from tarfile import TarInfo
 from tarfile import open as tar_open
 from unittest.case import TestCase
@@ -31,8 +32,12 @@ class InstallTest(TestCase):
 
     def test_sdist_excludes_datadir(self):
         'The created sdist should not contain the data dir.'
+        check_output(
+            args=[executable, 'setup.py', '-q', 'sdist'], stderr=STDOUT)
         latest_sdist = list(Path('dist').glob(pattern='*.tar.gz'))[-1]
         tar_file = tar_open(name=latest_sdist, mode='r:gz')
         for tarinfo in tar_file:  # type: TarInfo
             self.assertNotIn(
                 member='/validate_email/data/', container=tarinfo.name)
+        # Clean up after the test
+        rmtree('dist')
